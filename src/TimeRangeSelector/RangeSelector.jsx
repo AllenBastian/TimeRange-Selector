@@ -6,7 +6,7 @@ const RangeSelector = ({
   textColor = "black",
   textSize = "30",
   fontStyle = "Arial, sans-serif",
-  reservedSlot = { ranges: [],color: "rgba(100, 200, 100, 200)", opacity: 1 },
+  reservedSlot = { ranges: [],color: "rgb(100, 200, 100, 200)", opacity: 1 },
   SliderProps = {
     height: "40px",
     width: "10px",
@@ -22,13 +22,16 @@ const RangeSelector = ({
   const [startTime, setStartTime] = useState(0);
   const [reservedSlots, setReservedSlots] = useState([]);
   const [endTime, setEndTime] = useState(1439);
-  const sliderRef = useRef(null);
+  const sliderRef = useRef(null)
+  
+  console.log(reservedSlot.ranges);
 
   const ranges = reservedSlot.ranges.map((slot) => ({
     start: parseInt(moment(slot.start).format('HH')) * 60 + parseInt(moment(slot.start).format('mm')),
     end: parseInt(moment(slot.end).format('HH')) * 60 + parseInt(moment(slot.end).format('mm'))
   }));
 
+  console.log(ranges);
   const handleDrag = (event, handleType) => {
     console.log("hbe")
     const clientX = event.clientX || event.touches[0].clientX;
@@ -101,8 +104,8 @@ const RangeSelector = ({
               style={{
                 left: `${(range.start / 1440) * 100}%`,
                 right: `${100 - (range.end / 1440) * 100}%`,
-                backgroundColor: reservedSlotColor.color,
-                opacity: reservedSlotColor.opacity,
+                backgroundColor: reservedSlot.color,
+                opacity: reservedSlot.opacity,
               }}
             />
           </div>
