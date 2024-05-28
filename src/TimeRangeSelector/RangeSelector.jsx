@@ -15,6 +15,7 @@ const RangeSelector = ({
     borderColor: "red",
   },
   isTwelveHour = false,
+  showTime = true,
 
 }) => {
 
@@ -178,9 +179,12 @@ const RangeSelector = ({
         />
       </div>
 
+      {showTime && (
+
       <div className="font-semibold mt-4" style={{ color: textColor, fontSize: `${textSize}px`, fontFamily: fontStyle }}>
         {formatTime(startTime)} - {formatTime(endTime)}
       </div>
+      )}
     </div>
   );
 };
