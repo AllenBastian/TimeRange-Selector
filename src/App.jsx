@@ -24,6 +24,8 @@ function App() {
           color: "#333333",
           fillColor: "#d1ffbd",
           borderColor: "black",
+          start: null,
+          end: null,
        
         }}
         isTwelveHour={true}

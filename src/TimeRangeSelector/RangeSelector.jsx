@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef,useEffect } from "react";
 import moment from "moment";
 
 const RangeSelector = ({
@@ -16,17 +16,48 @@ const RangeSelector = ({
     color: "#333333",
     fillColor: "#DBF3FB",
     borderColor: "#55ADC3",
+    start: null,
+    end: null,
   },
   isTwelveHour = true,
   showTime = true,
   step = 5,
 }) => {
-  const [startTime, setStartTime] = useState(0);
-  const [endTime, setEndTime] = useState(1435);
+  const initialStartTime =
+    SliderProps.start !== null
+      ? parseInt(moment(SliderProps.start).format("HH")) * 60 +
+        parseInt(moment(SliderProps.start).format("mm"))
+      : 0;
+
+  const initialEndTime =
+    SliderProps.end !== null
+      ? parseInt(moment(SliderProps.end).format("HH")) * 60 +
+        parseInt(moment(SliderProps.end).format("mm"))
+      : 1435;
+
+  const [startTime, setStartTime] = useState(initialStartTime);
+  const [endTime, setEndTime] = useState(initialEndTime);
   const sliderRef = useRef(null);
 
+  useEffect(() => {
+    console.log(SliderProps.start, SliderProps.end);
+    if (SliderProps.start) {
+      let formattedStart =
+        parseInt(moment(SliderProps.start).format("HH")) * 60 +
+        parseInt(moment(SliderProps.start).format("mm"));
+      setStartTime(formattedStart);
+    }
+
+    if (SliderProps.end) {
+      let formattedEnd =
+        parseInt(moment(SliderProps.end).format("HH")) * 60 +
+        parseInt(moment(SliderProps.end).format("mm"));
+      setEndTime(formattedEnd);
+    }
+  }, [SliderProps.start, SliderProps.end]);
+
   // Format ranges in ISO string to minutes
-  const ranges = reservedSlot.ranges.map((slot) => ({
+  const ranges = reservedSlot?.ranges?.map((slot) => ({
     start:
       parseInt(moment(slot.start).format("HH")) * 60 +
       parseInt(moment(slot.start).format("mm")),
@@ -123,7 +154,7 @@ const RangeSelector = ({
           border: `1px solid ${SliderProps.borderColor}`,
         }}
       >
-        {ranges.map((range, index) => (
+        {ranges?.map((range, index) => (
           <div key={index}>
             <div
               className="absolute h-full z-10"
