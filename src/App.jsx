@@ -14,18 +14,20 @@ function App() {
         fontStyle="monospace, sans-serif"
         textSize="1.6rem"
         reservedSlot={{
-          color: "#FE5C58",
-          opacity: 0.8,
+          color: "#ff6242",
+          opacity: 0.5,
           ranges:[initialRange]
         }}
         SliderProps={{
           height: "3rem",
           width: "0.5rem",
           color: "#333333",
-          fillColor: "#55ADC3",
-          borderColor: "#55ADC3",
+          fillColor: "#d1ffbd",
+          borderColor: "black",
+       
         }}
         isTwelveHour={true}
+        step={5}
       />
     </div>
   );

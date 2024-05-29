@@ -1,39 +1,63 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import moment from "moment";
 
-
 const RangeSelector = ({
-  textColor = "black",
-  textSize = "30",
-  fontStyle = "Arial, sans-serif",
-  reservedSlot = { ranges: [],color: "rgb(100, 200, 100, 200)", opacity: 1 },
-  SliderProps = {
-    height: "40px",
-    width: "10px",
-    color: "black",
-    fillColor: "yellow",
-    borderColor: "red",
+  textColor = "#333333",
+  fontStyle = "monospace, sans-serif",
+  textSize = "1.6rem",
+  reservedSlot = {
+    color: "#FE5C58",
+    opacity: 0.8,
+    ranges: [],
   },
-  isTwelveHour = false,
+  SliderProps = {
+    height: "3rem",
+    width: "0.5rem",
+    color: "#333333",
+    fillColor: "#DBF3FB",
+    borderColor: "#55ADC3",
+  },
+  isTwelveHour = true,
   showTime = true,
-
+  step = 5,
 }) => {
-
   const [startTime, setStartTime] = useState(0);
-  const [reservedSlots, setReservedSlots] = useState([]);
-  const [endTime, setEndTime] = useState(1439);
-  const sliderRef = useRef(null)
-  
-  console.log(reservedSlot.ranges);
+  const [endTime, setEndTime] = useState(1435);
+  const sliderRef = useRef(null);
 
+  // Format ranges in ISO string to minutes
   const ranges = reservedSlot.ranges.map((slot) => ({
-    start: parseInt(moment(slot.start).format('HH')) * 60 + parseInt(moment(slot.start).format('mm')),
-    end: parseInt(moment(slot.end).format('HH')) * 60 + parseInt(moment(slot.end).format('mm'))
+    start:
+      parseInt(moment(slot.start).format("HH")) * 60 +
+      parseInt(moment(slot.start).format("mm")),
+    end:
+      parseInt(moment(slot.end).format("HH")) * 60 +
+      parseInt(moment(slot.end).format("mm")),
   }));
 
-  console.log(ranges);
+  const roundToStep = (value) => Math.round(value / step) * step;
+
+  const handleMouseDown = (event, type) => {
+    const onMouseMove = (event) => handleDrag(event, type);
+    const onMouseUp = () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+  };
+
+  const handleTouchStart = (event, type) => {
+    const onTouchMove = (event) => handleDrag(event.touches[0], type);
+    const onTouchEnd = () => {
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("touchend", onTouchEnd);
+    };
+    window.addEventListener("touchmove", onTouchMove);
+    window.addEventListener("touchend", onTouchEnd);
+  };
+
   const handleDrag = (event, handleType) => {
-    console.log("hbe")
     const clientX = event.clientX || event.touches[0].clientX;
     const sliderRect = sliderRef.current.getBoundingClientRect();
     const newPosition = Math.max(
@@ -44,13 +68,15 @@ const RangeSelector = ({
       )
     );
 
+    const roundedPosition = roundToStep(newPosition);
+
     if (handleType === "start") {
-      if (newPosition < endTime) {
-        setStartTime(newPosition);
+      if (roundedPosition < endTime) {
+        setStartTime(roundedPosition);
       }
     } else {
-      if (newPosition > startTime) {
-        setEndTime(newPosition);
+      if (roundedPosition > startTime) {
+        setEndTime(roundedPosition);
       }
     }
   };
@@ -58,15 +84,15 @@ const RangeSelector = ({
   const handleKeyDown = (event, handleType) => {
     if (handleType === "start") {
       if (event.key === "ArrowLeft" && startTime > 0) {
-        setStartTime(startTime - 1);
-      } else if (event.key === "ArrowRight" && startTime < endTime - 1) {
-        setStartTime(startTime + 1);
+        setStartTime((prev) => Math.max(0, prev - step));
+      } else if (event.key === "ArrowRight" && startTime < endTime - step) {
+        setStartTime((prev) => Math.min(endTime - step, prev + step));
       }
     } else {
-      if (event.key === "ArrowLeft" && endTime > startTime + 1) {
-        setEndTime(endTime - 1);
+      if (event.key === "ArrowLeft" && endTime > startTime + step) {
+        setEndTime((prev) => Math.max(startTime + step, prev - step));
       } else if (event.key === "ArrowRight" && endTime < 1439) {
-        setEndTime(endTime + 1);
+        setEndTime((prev) => Math.min(1439, prev + step));
       }
     }
   };
@@ -90,7 +116,7 @@ const RangeSelector = ({
   return (
     <div className="flex flex-col items-center p-8 bg-white w-full max-w-lg mx-auto">
       <div
-        className="relative w-full bg-gray-200 rounded"
+        className="relative w-full bg-gray-100 rounded shadow-md"
         ref={sliderRef}
         style={{
           height: SliderProps.height,
@@ -100,7 +126,7 @@ const RangeSelector = ({
         {ranges.map((range, index) => (
           <div key={index}>
             <div
-              className="absolute h-full z-10 "
+              className="absolute h-full z-10"
               style={{
                 left: `${(range.start / 1440) * 100}%`,
                 right: `${100 - (range.end / 1440) * 100}%`,
@@ -119,74 +145,46 @@ const RangeSelector = ({
           }}
         />
         <div
-          className="absolute md:w-1 w-5 rounded  cursor-pointer z-20 square-handle"
+          className="absolute rounded-md cursor-pointer z-20 transform -translate-y-1/2 -translate-x-1/2 transition-transform duration-200 ease-in-out hover:scale-110"
           style={{
             left: `${(startTime / 1440) * 100}%`,
-            transform: "translate(-50%, -50%)",
             top: "50%",
             height: SliderProps.height,
             width: SliderProps.width,
             backgroundColor: SliderProps.color,
           }}
-          onMouseDown={(event) => {
-            const onMouseMove = (event) => handleDrag(event, "start");
-            const onMouseUp = () => {
-              window.removeEventListener("mousemove", onMouseMove);
-              window.removeEventListener("mouseup", onMouseUp);
-            };
-            window.addEventListener("mousemove", onMouseMove);
-            window.addEventListener("mouseup", onMouseUp);
-          }}
-          onTouchStart={(event) => {
-            const onTouchMove = (event) => handleDrag(event.touches[0], "start");
-            const onTouchEnd = () => {
-              window.removeEventListener("touchmove", onTouchMove);
-              window.removeEventListener("touchend", onTouchEnd);
-            };
-            window.addEventListener("touchmove", onTouchMove);
-            window.addEventListener("touchend", onTouchEnd);
-          }}
+          onMouseDown={(event) => handleMouseDown(event, "start")}
+          onTouchStart={(event) => handleTouchStart(event, "start")}
           tabIndex={0}
           onKeyDown={(event) => handleKeyDown(event, "start")}
         />
         <div
-          className="absolute md:w-1 cursor-pointer rounded z-20 square-handle"
+          className="absolute rounded-md cursor-pointer z-20 transform -translate-y-1/2 -translate-x-1/2 transition-transform duration-200 ease-in-out hover:scale-110"
           style={{
             left: `${(endTime / 1440) * 100}%`,
-            transform: "translate(-50%, -50%)",
             top: "50%",
             height: SliderProps.height,
             width: SliderProps.width,
             backgroundColor: SliderProps.color,
           }}
-          onMouseDown={(event) => {
-            const onMouseMove = (event) => handleDrag(event, "end");
-            const onMouseUp = () => {
-              window.removeEventListener("mousemove", onMouseMove);
-              window.removeEventListener("mouseup", onMouseUp);
-            };
-            window.addEventListener("mousemove", onMouseMove);
-            window.addEventListener("mouseup", onMouseUp);
-          }}
-          onTouchStart={(event) => {
-            const onTouchMove = (event) => handleDrag(event.touches[0], "end");
-            const onTouchEnd = () => {
-              window.removeEventListener("touchmove", onTouchMove);
-              window.removeEventListener("touchend", onTouchEnd);
-            };
-            window.addEventListener("touchmove", onTouchMove);
-            window.addEventListener("touchend", onTouchEnd);
-          }}
+          onMouseDown={(event) => handleMouseDown(event, "end")}
+          onTouchStart={(event) => handleTouchStart(event, "end")}
           tabIndex={0}
           onKeyDown={(event) => handleKeyDown(event, "end")}
         />
       </div>
 
       {showTime && (
-
-      <div className="font-semibold mt-4" style={{ color: textColor, fontSize: `${textSize}px`, fontFamily: fontStyle }}>
-        {formatTime(startTime)} - {formatTime(endTime)}
-      </div>
+        <div
+          className="font-semibold mt-4 text-center"
+          style={{
+            color: textColor,
+            fontSize: `${textSize}px`,
+            fontFamily: fontStyle,
+          }}
+        >
+          {formatTime(startTime)} - {formatTime(endTime)}
+        </div>
       )}
     </div>
   );
