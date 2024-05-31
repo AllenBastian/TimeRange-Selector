@@ -1,4 +1,4 @@
-import { useState, useRef,useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import moment from "moment";
 
 const RangeSelector = ({
@@ -22,48 +22,67 @@ const RangeSelector = ({
   isTwelveHour = true,
   showTime = true,
   step = 5,
+  workingHoursStart = 8 * 60, // 8am in minutes
+  workingHoursEnd = 17 * 60, // 5pm in minutes
 }) => {
+  const totalMinutes = workingHoursEnd - workingHoursStart;
+
   const initialStartTime =
     SliderProps.start !== null
-      ? parseInt(moment(SliderProps.start).format("HH")) * 60 +
-        parseInt(moment(SliderProps.start).format("mm"))
+      ? Math.max(
+          0,
+          parseInt(moment(SliderProps.start).format("HH")) * 60 +
+            parseInt(moment(SliderProps.start).format("mm")) - workingHoursStart
+        )
       : 0;
 
   const initialEndTime =
     SliderProps.end !== null
-      ? parseInt(moment(SliderProps.end).format("HH")) * 60 +
-        parseInt(moment(SliderProps.end).format("mm"))
-      : 1435;
+      ? Math.min(
+          totalMinutes,
+          parseInt(moment(SliderProps.end).format("HH")) * 60 +
+            parseInt(moment(SliderProps.end).format("mm")) - workingHoursStart
+        )
+      : totalMinutes;
 
   const [startTime, setStartTime] = useState(initialStartTime);
   const [endTime, setEndTime] = useState(initialEndTime);
   const sliderRef = useRef(null);
 
   useEffect(() => {
-    console.log(SliderProps.start, SliderProps.end);
     if (SliderProps.start) {
       let formattedStart =
         parseInt(moment(SliderProps.start).format("HH")) * 60 +
-        parseInt(moment(SliderProps.start).format("mm"));
-      setStartTime(formattedStart);
+        parseInt(moment(SliderProps.start).format("mm")) -
+        workingHoursStart;
+      setStartTime(Math.max(0, formattedStart));
     }
 
     if (SliderProps.end) {
       let formattedEnd =
         parseInt(moment(SliderProps.end).format("HH")) * 60 +
-        parseInt(moment(SliderProps.end).format("mm"));
-      setEndTime(formattedEnd);
+        parseInt(moment(SliderProps.end).format("mm")) -
+        workingHoursStart;
+      setEndTime(Math.min(totalMinutes, formattedEnd));
     }
-  }, [SliderProps.start, SliderProps.end]);
+  }, [SliderProps.start, SliderProps.end, workingHoursStart, workingHoursEnd]);
 
-  // Format ranges in ISO string to minutes
+  // Format ranges in ISO string to minutes within working hours
   const ranges = reservedSlot?.ranges?.map((slot) => ({
     start:
-      parseInt(moment(slot.start).format("HH")) * 60 +
-      parseInt(moment(slot.start).format("mm")),
+      Math.max(
+        0,
+        parseInt(moment(slot.start).format("HH")) * 60 +
+          parseInt(moment(slot.start).format("mm")) -
+          workingHoursStart
+      ),
     end:
-      parseInt(moment(slot.end).format("HH")) * 60 +
-      parseInt(moment(slot.end).format("mm")),
+      Math.min(
+        totalMinutes,
+        parseInt(moment(slot.end).format("HH")) * 60 +
+          parseInt(moment(slot.end).format("mm")) -
+          workingHoursStart
+      ),
   }));
 
   const roundToStep = (value) => Math.round(value / step) * step;
@@ -94,8 +113,8 @@ const RangeSelector = ({
     const newPosition = Math.max(
       0,
       Math.min(
-        1439,
-        Math.floor(((clientX - sliderRect.left) / sliderRect.width) * 1440)
+        totalMinutes,
+        Math.floor(((clientX - sliderRect.left) / sliderRect.width) * totalMinutes)
       )
     );
 
@@ -122,15 +141,16 @@ const RangeSelector = ({
     } else {
       if (event.key === "ArrowLeft" && endTime > startTime + step) {
         setEndTime((prev) => Math.max(startTime + step, prev - step));
-      } else if (event.key === "ArrowRight" && endTime < 1439) {
-        setEndTime((prev) => Math.min(1439, prev + step));
+      } else if (event.key === "ArrowRight" && endTime < totalMinutes) {
+        setEndTime((prev) => Math.min(totalMinutes, prev + step));
       }
     }
   };
 
   const formatTime = (value) => {
-    const hours = Math.floor(value / 60);
-    const minutes = value % 60;
+    const totalMinutesTime = value + workingHoursStart;
+    const hours = Math.floor(totalMinutesTime / 60);
+    const minutes = totalMinutesTime % 60;
 
     if (!isTwelveHour) {
       const formattedHours = hours < 10 ? `0${hours}` : hours;
@@ -159,8 +179,8 @@ const RangeSelector = ({
             <div
               className="absolute h-full z-10"
               style={{
-                left: `${(range.start / 1440) * 100}%`,
-                right: `${100 - (range.end / 1440) * 100}%`,
+                left: `${(range.start / totalMinutes) * 100}%`,
+                right: `${100 - (range.end / totalMinutes) * 100}%`,
                 backgroundColor: reservedSlot.color,
                 opacity: reservedSlot.opacity,
               }}
@@ -170,15 +190,15 @@ const RangeSelector = ({
         <div
           className="absolute h-full rounded"
           style={{
-            left: `${(startTime / 1440) * 100}%`,
-            right: `${100 - (endTime / 1440) * 100}%`,
+            left: `${(startTime / totalMinutes) * 100}%`,
+            right: `${100 - (endTime / totalMinutes) * 100}%`,
             backgroundColor: SliderProps.fillColor,
           }}
         />
         <div
           className="absolute rounded-md cursor-pointer z-20 transform -translate-y-1/2 -translate-x-1/2 transition-transform duration-200 ease-in-out hover:scale-110"
           style={{
-            left: `${(startTime / 1440) * 100}%`,
+            left: `${(startTime / totalMinutes) * 100}%`,
             top: "50%",
             height: SliderProps.height,
             width: SliderProps.width,
@@ -192,7 +212,7 @@ const RangeSelector = ({
         <div
           className="absolute rounded-md cursor-pointer z-20 transform -translate-y-1/2 -translate-x-1/2 transition-transform duration-200 ease-in-out hover:scale-110"
           style={{
-            left: `${(endTime / 1440) * 100}%`,
+            left: `${(endTime / totalMinutes) * 100}%`,
             top: "50%",
             height: SliderProps.height,
             width: SliderProps.width,
