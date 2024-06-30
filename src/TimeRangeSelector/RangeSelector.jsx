@@ -22,8 +22,8 @@ const RangeSelector = ({
   isTwelveHour = true,
   showTime = true,
   step = 5,
-  workingHoursStart = 8 * 60, // 8am in minutes
-  workingHoursEnd = 17 * 60, // 5pm in minutes
+  workingHoursStart = 8 * 60, 
+  workingHoursEnd = 17 * 60, 
 }) => {
   const totalMinutes = workingHoursEnd - workingHoursStart;
 

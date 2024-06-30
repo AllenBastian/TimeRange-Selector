@@ -28,8 +28,10 @@ function App() {
           end: null,
        
         }}
-        isTwelveHour={true}
+        isTwelveHour={false}
         step={5}
+        workingHoursStart={0*60}
+        workingHoursEnd={24*60}
       />
     </div>
   );
